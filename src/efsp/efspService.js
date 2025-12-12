@@ -1,7 +1,17 @@
 import logger from '../config/logger.js';
+import env from '../config/env.js';
 import { assertRequiredFields } from './contracts.js';
 import { buildFilingEnvelope } from '../envelopes/envelopeBuilder.js';
 import { resolveBackend } from '../routing/router.js';
+
+function createPayloadHash(payload) {
+  try {
+    const json = JSON.stringify(payload) || '';
+    return Buffer.from(json).toString('base64').slice(0, 32);
+  } catch (err) {
+    return 'unhashable';
+  }
+}
 
 export async function submitFiling(filingRequest) {
   assertRequiredFields(filingRequest, ['jurisdiction', 'caseType', 'filingType', 'documents']);
@@ -20,6 +30,66 @@ export async function submitFiling(filingRequest) {
     },
     'EFSP submitFiling invoked',
   );
+
+  if (env.txCertMode) {
+    const payloadHash = createPayloadHash(filingRequest);
+    const scenario =
+      (filingRequest && filingRequest.metadata && filingRequest.metadata.txCertScenario) ||
+      'success';
+
+    let response;
+
+    if (scenario === 'validation_error') {
+      response = {
+        status: 'error',
+        message: 'TX_CERT_MODE: mock validation error',
+        backend: resolution.backend,
+        correlationId,
+        providerResponse: {
+          code: 'TX_CERT_VALIDATION_ERROR',
+          httpStatus: 400,
+        },
+      };
+    } else if (scenario === 'server_error') {
+      response = {
+        status: 'error',
+        message: 'TX_CERT_MODE: mock internal error',
+        backend: resolution.backend,
+        correlationId,
+        providerResponse: {
+          code: 'TX_CERT_SERVER_ERROR',
+          httpStatus: 500,
+        },
+      };
+    } else {
+      response = {
+        status: 'accepted',
+        message: 'TX_CERT_MODE: mock accepted',
+        backend: resolution.backend,
+        correlationId,
+        providerResponse: {
+          code: 'TX_CERT_ACCEPTED',
+          httpStatus: 200,
+        },
+      };
+    }
+
+    logger.info(
+      {
+        correlationId,
+        jurisdiction: filingRequest.jurisdiction,
+        filingType: filingRequest.filingType,
+        backend: resolution.backend,
+        txCertMode: true,
+        txCertScenario: scenario,
+        payloadHash,
+        deterministic: true,
+      },
+      'TX certification dry-run response',
+    );
+
+    return response;
+  }
 
   if (!resolution.enabled) {
     return {

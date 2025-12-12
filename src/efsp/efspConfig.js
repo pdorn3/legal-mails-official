@@ -12,10 +12,12 @@ export const EFSP_CONFIG = {
     },
   },
   defaultEnv: process.env.EFSP_ENV || 'test',
+  defaultJurisdiction: 'TX',
+  supportedJurisdictions: ['TX'],
   routing: {
     jurisdictions: [
-      { jurisdiction: 'GA', backend: 'TYLER_EFM', enabled: true },
-      { jurisdiction: 'TX', backend: 'TYLER_EFM', enabled: false },
+      { jurisdiction: 'TX', backend: 'TYLER_EFM', enabled: true },
+      { jurisdiction: 'GA', backend: 'TYLER_EFM', enabled: false },
       { jurisdiction: 'FL', backend: 'FLORIDA_PORTAL', enabled: false },
     ],
   },

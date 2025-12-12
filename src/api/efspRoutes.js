@@ -7,13 +7,8 @@ const router = Router();
 
 router.get('/status', (req, res, next) => {
   try {
-    const jurisdiction = req.query.jurisdiction;
-
-    if (!jurisdiction) {
-      return res.status(400).json({
-        error: 'jurisdiction query parameter is required',
-      });
-    }
+    const jurisdiction =
+      req.query.jurisdiction || EFSP_CONFIG.defaultJurisdiction || 'TX';
 
     const routingStatus = getRoutingStatus(jurisdiction);
 

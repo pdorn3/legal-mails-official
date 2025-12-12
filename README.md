@@ -1,6 +1,6 @@
 # Legal-Mails
 
-Legal-Mails – EFSP infrastructure service for automated court filings.
+Legal-Mails – EFSP infrastructure service for automated court filings .
 
 ## Quickstart
 
